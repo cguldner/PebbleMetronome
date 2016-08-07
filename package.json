@@ -1,0 +1,86 @@
+{
+    "author": "Cody",
+    "dependencies": {
+        "pebble-clay": "^1.0.2"
+    },
+    "keywords": [],
+    "name": "metronome",
+    "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
+        "displayName": "Visual Metronome",
+        "enableMultiJS": true,
+        "messageKeys": [
+            "Flashing",
+            "VibeLength",
+            "BackgroundColor",
+            "ForegroundColor"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "images/settings.png",
+                    "name": "SETTINGS",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/metronome_icon.png",
+                    "menuIcon": true,
+                    "name": "METRO_ICON",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/pause.png",
+                    "name": "PAUSE_METRO",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/play.png",
+                    "name": "START_METRO",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/minus.png",
+                    "name": "SUBTRACT_BEATS",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/plus.png",
+                    "name": "ADD_BEATS",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/up_arrow.png",
+                    "name": "UP_ARROW",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/down_arrow.png",
+                    "name": "DOWN_ARROW",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "aplite",
+            "basalt",
+            "chalk"
+        ],
+        "uuid": "554e5a37-49ea-4018-ab26-b59cfc8bc0d3",
+        "watchapp": {
+            "watchface": false
+        }
+    },
+    "version": "1.0.0"
+}
