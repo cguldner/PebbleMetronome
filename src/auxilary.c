@@ -1,5 +1,17 @@
+/**
+  * Includes the various functions that interact with the application logic of the metronome
+  */
+
 #include "auxilary.h"
 
+void update_bpm(int amount) {
+    int new_bpm = bpm + amount;
+    if(new_bpm < 1 || new_bpm > 300)
+        return;
+    bpm = new_bpm;
+    text_layer_set_text(bpm_text_layer, int_to_str(bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking(bpm));
+}
 
 uint32_t convert_bpm(int beats) {
     // Minute to milliseconds

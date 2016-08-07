@@ -15,6 +15,7 @@ bool flashing;
 
 int bpm;
 
+void update_bpm(int amount);
 
 uint32_t convert_bpm(int beats);
 
