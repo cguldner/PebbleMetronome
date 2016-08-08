@@ -37,41 +37,36 @@ void metro_loop_handler(void *data) {
 
 void click_config_provider(void *context) {
     window_single_repeating_click_subscribe(BUTTON_ID_UP, 75, up_bpm_click_handler);
-    window_long_click_subscribe(BUTTON_ID_UP, 500, up_tempo_click_handler_icon, up_tempo_click_handler);
+    //window_multi_click_subscribe(BUTTON_ID_UP, 2, 2, 100, true, up_tempo_click_handler);
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 75, down_bpm_click_handler);
-    window_long_click_subscribe(BUTTON_ID_DOWN, 500, down_tempo_click_handler_icon, down_tempo_click_handler);
+    //window_multi_click_subscribe(BUTTON_ID_DOWN, 2, 2, 100, true, down_tempo_click_handler);
     
     window_single_click_subscribe(BUTTON_ID_SELECT, select_play_click_handler);
-    //window_long_click_subscribe(BUTTON_ID_SELECT, 500, select_long_click_handler, NULL);
+    window_long_click_subscribe(BUTTON_ID_SELECT, 400, select_long_click_handler, NULL);
 }
 
-/*
+
 void aux_click_config_provider(void *context) {
     window_single_repeating_click_subscribe(BUTTON_ID_UP, 75, up_tempo_click_handler);
     window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 75, down_tempo_click_handler);
-    window_long_click_subscribe(BUTTON_ID_SELECT, 500, select_long_click_handler, NULL);
-}*/
+    
+    window_single_click_subscribe(BUTTON_ID_SELECT, select_play_click_handler);
+    window_long_click_subscribe(BUTTON_ID_SELECT, 400, select_long_click_handler, NULL);
+}
 
 void up_bpm_click_handler(ClickRecognizerRef recognizer, void *context) {
     update_bpm(1);
 }
 
-// Change the icon to the up arrow
-void up_tempo_click_handler_icon(ClickRecognizerRef recognizer, void *context) {
-    action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_UP_ARROW), true);
-}
-
 void up_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
+    // Remove the aux action bar
+    action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
+    action_bar_layer_destroy(aux_action_bar);
+    aux_action_bar = NULL;
+    
     bpm = change_tempo_marking(1);
     text_layer_set_text(bpm_text_layer, int_to_str(bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking(bpm));
-    
-    action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_ADD_BEATS), true);
-    
-    // Remove the aux action bar
-    /*action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
-    action_bar_layer_destroy(aux_action_bar);
-    aux_action_bar = NULL;*/
 }
 
 void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -90,7 +85,7 @@ void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
     }
 }
 
-/*void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
     // Don't vibrate if metronome is going
     if(metro_timer == NULL) {
         VibePattern pat = {
@@ -109,7 +104,7 @@ void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
         action_bar_layer_set_click_config_provider(aux_action_bar, aux_click_config_provider);
     
         action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_UP_ARROW), true);
-        action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_SETTINGS), true);
+        action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_START_METRO), true);
         action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_DOWN, gbitmap_create_with_resource(RESOURCE_ID_DOWN_ARROW), true);
     }
     else {
@@ -118,28 +113,21 @@ void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
         action_bar_layer_destroy(aux_action_bar);
         aux_action_bar = NULL;
     }
-}*/
+}
 
 void down_bpm_click_handler(ClickRecognizerRef recognizer, void *context) {
     update_bpm(-1);
 }
 
-// Change the icon to the down arrow
-void down_tempo_click_handler_icon(ClickRecognizerRef recognizer, void *context) {
-    action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_DOWN, gbitmap_create_with_resource(RESOURCE_ID_DOWN_ARROW), true);
-}
-
 void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
+    // Remove the aux action bar
+    action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
+    action_bar_layer_destroy(aux_action_bar);
+    aux_action_bar = NULL;
+    
     bpm = change_tempo_marking(-1);
     text_layer_set_text(bpm_text_layer, int_to_str(bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking(bpm));
-    
-    action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_DOWN, gbitmap_create_with_resource(RESOURCE_ID_SUBTRACT_BEATS), true);
-    
-    // Remove the aux action bar
-    /*action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
-    action_bar_layer_destroy(aux_action_bar);
-    aux_action_bar = NULL;*/
 }
 
 void window_load(Window *window) {

@@ -21,12 +21,6 @@
         "resources": {
             "media": [
                 {
-                    "file": "images/settings.png",
-                    "name": "SETTINGS",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
-                {
                     "file": "images/metronome_icon.png",
                     "menuIcon": true,
                     "name": "METRO_ICON",
@@ -82,5 +76,5 @@
             "watchface": false
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.0"
 }
