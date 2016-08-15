@@ -2,7 +2,9 @@
   * Includes the various functions that interact with the application logic of the metronome
   */
 
-#include "auxilary.h"
+#include "auxiliary.h"
+#include "meter_arm.h"
+#include "main.h"
 
 void update_bpm(int amount) {
     int new_bpm = bpm + amount;
@@ -138,18 +140,24 @@ void toggle_colors(int *toggle) {
     GColor fg_color_con = GColorFromHEX(fg_color);
     GColor bg_color_con = GColorFromHEX(bg_color);
     if(*toggle) {
-        window_set_background_color(window, bg_color_con);
-        text_layer_set_background_color(bpm_text_layer, bg_color_con);
-        text_layer_set_text_color(bpm_text_layer, fg_color_con);
-        text_layer_set_background_color(tempo_text_layer, bg_color_con);
-        text_layer_set_text_color(tempo_text_layer, fg_color_con);
-    }
-    // Value of 0 resets the colors
-    else {
         window_set_background_color(window, fg_color_con);
         text_layer_set_background_color(bpm_text_layer, fg_color_con);
         text_layer_set_text_color(bpm_text_layer, bg_color_con);
         text_layer_set_background_color(tempo_text_layer, fg_color_con);
         text_layer_set_text_color(tempo_text_layer, bg_color_con);
+        
+        meter_color = bg_color;
     }
+    // Value of 0 resets the colors
+    else {
+        window_set_background_color(window, bg_color_con);
+        text_layer_set_background_color(bpm_text_layer, bg_color_con);
+        text_layer_set_text_color(bpm_text_layer, fg_color_con);
+        text_layer_set_background_color(tempo_text_layer, bg_color_con);
+        text_layer_set_text_color(tempo_text_layer, fg_color_con);
+        
+        meter_color = fg_color;
+    }
+    // Update the color of the metronome arm
+    layer_mark_dirty(s_path_layer);
 }
