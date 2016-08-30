@@ -14,6 +14,7 @@ int fg_color, bg_color;
 bool flashing;
 
 int bpm;
+bool meter_arm_hidden;
 
 void update_bpm(int amount);
 

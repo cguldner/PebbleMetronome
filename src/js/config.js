@@ -44,7 +44,7 @@ module.exports = [
                 "type": "toggle",
                 "messageKey": "Flashing",
                 "label": "Enable flashing",
-                "defaultValue": true
+                "defaultValue": false
             },
             {
                 "type": "slider",

@@ -15,6 +15,7 @@ static const int FG_KEY = 1;
 static const int BG_KEY = 2;
 static const int VIBE_KEY = 3;
 static const int FLASH_KEY = 4;
+static const int METERARM_KEY = 5;
 
 static AppTimer *metro_timer = NULL;
 // Insert length of vibration
@@ -102,6 +103,7 @@ void select_meter_click_handler(ClickRecognizerRef recognizer, void *context) {
     
     if(layer_get_hidden(s_path_layer)) {
         layer_set_hidden(s_path_layer, false);
+        meter_arm_hidden = false;
 
         layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
         text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
@@ -111,6 +113,7 @@ void select_meter_click_handler(ClickRecognizerRef recognizer, void *context) {
     }
     else {
         layer_set_hidden(s_path_layer, true);
+        meter_arm_hidden = true;
 
         layer_set_frame((Layer *)bpm_text_layer, GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
         text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
@@ -200,7 +203,19 @@ void window_load(Window *window) {
     meter_color = fg_color;
     
     create_meter_arm();
-    layer_set_hidden(s_path_layer, true);
+    
+    if(!meter_arm_hidden) {
+        layer_set_hidden(s_path_layer, false);
+
+        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
+        
+        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    }
+    else {
+        layer_set_hidden(s_path_layer, true);
+    }
 }
 
 void window_unload(Window *window) {
@@ -248,7 +263,9 @@ void init(void) {
     if(persist_exists(VIBE_KEY)) vibe_pat[0] = (int)persist_read_int(VIBE_KEY);
     else vibe_pat[0] = 50;
     if(persist_exists(FLASH_KEY)) flashing = (bool)persist_read_bool(FLASH_KEY);
-    else flashing = true;
+    else flashing = false;
+    if(persist_exists(METERARM_KEY)) meter_arm_hidden = (bool)persist_read_bool(METERARM_KEY);
+    else meter_arm_hidden = true;
     
     // Open AppMessage connection
     app_message_register_inbox_received(prv_inbox_received_handler);
@@ -265,6 +282,7 @@ void deinit(void) {
     persist_write_int(BG_KEY, bg_color);
     persist_write_int(VIBE_KEY, vibe_pat[0]);
     persist_write_bool(FLASH_KEY, flashing);
+    persist_write_bool(METERARM_KEY, meter_arm_hidden);
     // Destroy main Window
     window_destroy(window);
     
