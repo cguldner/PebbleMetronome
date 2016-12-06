@@ -10,3 +10,4 @@ char * get_tempo_marking(int bpm);
 int change_tempo_marking(int dir);
 
 void toggle_colors(int *toggle);
+void toggle_meter_arm();

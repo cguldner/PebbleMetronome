@@ -6,6 +6,9 @@
 #include "meter_arm.h"
 #include "main.h"
 
+/**
+ * Updates the bpm by the amount specified
+ */
 void update_bpm(int amount) {
     int new_bpm = bpm + amount;
     if(new_bpm < 1 || new_bpm > 300)
@@ -15,6 +18,9 @@ void update_bpm(int amount) {
     text_layer_set_text(tempo_text_layer, get_tempo_marking(bpm));
 }
 
+/**
+ * Convert bpm to time, for scheduling timers for vibrations
+ */
 uint32_t convert_bpm(int beats) {
     // Minute to milliseconds
     int minute = 1000 * 60;
@@ -22,7 +28,9 @@ uint32_t convert_bpm(int beats) {
     return (uint32_t)converted;
 }
 
-// Converts an integer to a char array/string
+/**
+ * Converts an integer to a char array/string
+ */
 char * int_to_str(int num) {
     static char buff[3] = {};
     int i = 0, temp_num = num, length = 0;
@@ -47,6 +55,9 @@ char * int_to_str(int num) {
     return string;
 }
 
+/**
+ * Gets the tempo marking given the bpm
+ */
 char * get_tempo_marking(int bpm) {
     char buff[20] = {};
     char * tempo = buff;
@@ -92,7 +103,9 @@ char * get_tempo_marking(int bpm) {
     return tempo;
 }
 
-// Changes the tempo marking to either the next or previous based on the dir given, either 1 or -1
+/**
+ * Changes the tempo marking to either the next or previous based on the dir given, either 1 or -1
+ */
 int change_tempo_marking(int dir) {    
     switch(bpm) {
         case 1 ... 20:
@@ -135,7 +148,10 @@ int change_tempo_marking(int dir) {
     return bpm;
 }
 
-// Toggles the colors on the screen
+/**
+ * Toggles the colors between the foreground and background colors
+ * @param toggle - a pointer to a boolean, 0 to reset
+ */
 void toggle_colors(int *toggle) {
     GColor fg_color_con = GColorFromHEX(fg_color);
     GColor bg_color_con = GColorFromHEX(bg_color);
@@ -160,4 +176,34 @@ void toggle_colors(int *toggle) {
     }
     // Update the color of the metronome arm
     layer_mark_dirty(s_path_layer);
+}
+
+/**
+ * Either shows or hides the meter arm, based on the message key "meter_arm"
+ */
+void toggle_meter_arm() {
+    GRect bounds = layer_get_bounds(window_get_root_layer(window));
+    // Centers the text on the round watches, looks weird if off center
+    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
+    
+    if(meter_arm) {
+        layer_set_hidden(s_path_layer, false);
+        
+        // Move to make room for the meter arm
+        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
+        
+        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    }
+    else {
+        layer_set_hidden(s_path_layer, true);
+        
+        // Center the frames
+        layer_set_frame((Layer *)bpm_text_layer, GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+
+        layer_set_frame((Layer *)tempo_text_layer, GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    }
 }

@@ -47,6 +47,12 @@ module.exports = [
                 "defaultValue": false
             },
             {
+                "type": "toggle",
+                "messageKey": "MeterArm",
+                "label": "Show the ticking arm that moves back and forth",
+                "defaultValue": true
+            },
+            {
                 "type": "slider",
                 "messageKey": "VibeLength",
                 "defaultValue": 50,

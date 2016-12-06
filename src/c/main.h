@@ -12,9 +12,8 @@ ActionBarLayer *prim_action_bar, *aux_action_bar;
 // Variables set by the Clay configurator
 int fg_color, bg_color;
 bool flashing;
-
 int bpm;
-bool meter_arm_hidden;
+bool meter_arm;
 
 void update_bpm(int amount);
 

@@ -1,10 +1,3 @@
-/**
-  * Menu icon credit: Metronome by Pavel Diatchenko from the Noun Project,
-                      Metronome by Philip Hogeboom from the Noun Project
-  * Banner credit: http://static.wixstatic.com/media/871218_6a00fd1af0fa4420b8f9c6eb695af50b.jpg
-  * Icon credit: http://3.bp.blogspot.com/-RVClYFeAFDM/UHGqotZtxqI/AAAAAAAAAlE/1rXjpQXtGs0/s1600/Metronome.gif
-  */
-
 #include "auxiliary.h"
 #include "main.h"
 #include "meter_arm.h"
@@ -48,7 +41,6 @@ void click_config_provider(void *context) {
     window_single_click_subscribe(BUTTON_ID_SELECT, select_play_click_handler);
     window_long_click_subscribe(BUTTON_ID_SELECT, 400, select_long_click_handler, NULL);
 }
-
 
 void aux_click_config_provider(void *context) {
     window_single_repeating_click_subscribe(BUTTON_ID_UP, 75, up_tempo_click_handler);
@@ -96,31 +88,6 @@ void select_meter_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
-    
-    GRect bounds = layer_get_bounds(window_get_root_layer(window));
-    // Centers the text on the round watches, looks weird if off center
-    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
-    
-    if(layer_get_hidden(s_path_layer)) {
-        layer_set_hidden(s_path_layer, false);
-        meter_arm_hidden = false;
-
-        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
-        
-        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
-        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-    }
-    else {
-        layer_set_hidden(s_path_layer, true);
-        meter_arm_hidden = true;
-
-        layer_set_frame((Layer *)bpm_text_layer, GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
-
-        layer_set_frame((Layer *)tempo_text_layer, GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
-    }
 }
 
 void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -142,7 +109,7 @@ void select_long_click_handler(ClickRecognizerRef recognizer, void *context) {
         action_bar_layer_set_click_config_provider(aux_action_bar, aux_click_config_provider);
     
         action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_UP_ARROW), true);
-        action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_METER_ARM), true);
+        //action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_METER_ARM), true);
         action_bar_layer_set_icon_animated(aux_action_bar, BUTTON_ID_DOWN, gbitmap_create_with_resource(RESOURCE_ID_DOWN_ARROW), true);
         
     }
@@ -204,18 +171,7 @@ void window_load(Window *window) {
     
     create_meter_arm();
     
-    if(!meter_arm_hidden) {
-        layer_set_hidden(s_path_layer, false);
-
-        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
-        
-        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
-        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-    }
-    else {
-        layer_set_hidden(s_path_layer, true);
-    }
+    toggle_meter_arm();
 }
 
 void window_unload(Window *window) {
@@ -233,12 +189,17 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
     
     Tuple *flashing_t = dict_find(iter, MESSAGE_KEY_Flashing);
     if(flashing_t) flashing = flashing_t->value->int32 == 1;
+    
+    Tuple *meter_arm_t = dict_find(iter, MESSAGE_KEY_MeterArm);
+    if(meter_arm_t) meter_arm = meter_arm_t->value->int32 == 1;
 
     Tuple *vibes_t = dict_find(iter, MESSAGE_KEY_VibeLength);
     if(vibes_t) vibe_pat[0] = vibes_t->value->int32;
     
     toggle_num = 0;
     toggle_colors(&toggle_num);
+    
+    toggle_meter_arm();
 }
 
 void init(void) {
@@ -264,8 +225,8 @@ void init(void) {
     else vibe_pat[0] = 50;
     if(persist_exists(FLASH_KEY)) flashing = (bool)persist_read_bool(FLASH_KEY);
     else flashing = false;
-    if(persist_exists(METERARM_KEY)) meter_arm_hidden = (bool)persist_read_bool(METERARM_KEY);
-    else meter_arm_hidden = true;
+    if(persist_exists(METERARM_KEY)) meter_arm = (bool)persist_read_bool(METERARM_KEY);
+    else meter_arm = true;
     
     // Open AppMessage connection
     app_message_register_inbox_received(prv_inbox_received_handler);
@@ -282,7 +243,7 @@ void deinit(void) {
     persist_write_int(BG_KEY, bg_color);
     persist_write_int(VIBE_KEY, vibe_pat[0]);
     persist_write_bool(FLASH_KEY, flashing);
-    persist_write_bool(METERARM_KEY, meter_arm_hidden);
+    persist_write_bool(METERARM_KEY, meter_arm);
     // Destroy main Window
     window_destroy(window);
     

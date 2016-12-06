@@ -15,7 +15,8 @@
             "Flashing",
             "VibeLength",
             "BackgroundColor",
-            "ForegroundColor"
+            "ForegroundColor",
+            "MeterArm"
         ],
         "projectType": "native",
         "resources": {
@@ -23,13 +24,6 @@
                 {
                     "file": "images/meter_arm.png",
                     "name": "METER_ARM",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/metronome_icon.png",
-                    "menuIcon": true,
-                    "name": "METRO_ICON",
                     "targetPlatforms": null,
                     "type": "bitmap"
                 },
@@ -76,12 +70,13 @@
             "aplite",
             "basalt",
             "chalk",
-            "diorite"
+            "diorite",
+            "emery"
         ],
         "uuid": "554e5a37-49ea-4018-ab26-b59cfc8bc0d3",
         "watchapp": {
             "watchface": false
         }
     },
-    "version": "1.4.0"
+    "version": "1.5.0"
 }

@@ -1,9 +1,6 @@
 #include <pebble.h>
 #include "SmallMaths.h"
 
-#include <pebble.h>
-#include "SmallMaths.h"
-
 const float PI     = 3.14159265;
 const float TWOPI  = 6.28318531;
 const float HALFPI = 1.57079633;
