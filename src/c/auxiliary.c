@@ -10,12 +10,12 @@
  * Updates the bpm by the amount specified
  */
 void update_bpm(int amount) {
-    int new_bpm = bpm + amount;
+    int new_bpm = settings.bpm + amount;
     if(new_bpm < 1 || new_bpm > 300)
         return;
-    bpm = new_bpm;
-    text_layer_set_text(bpm_text_layer, int_to_str(bpm));
-    text_layer_set_text(tempo_text_layer, get_tempo_marking(bpm));
+    settings.bpm = new_bpm;
+    text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
 }
 
 /**
@@ -106,7 +106,8 @@ char * get_tempo_marking(int bpm) {
 /**
  * Changes the tempo marking to either the next or previous based on the dir given, either 1 or -1
  */
-int change_tempo_marking(int dir) {    
+int change_tempo_marking(int dir) {
+    int bpm = settings.bpm;
     switch(bpm) {
         case 1 ... 20:
             bpm = dir==1 ? 21 : 1;
@@ -153,8 +154,8 @@ int change_tempo_marking(int dir) {
  * @param toggle - a pointer to a boolean, 0 to reset
  */
 void toggle_colors(int *toggle) {
-    GColor fg_color_con = GColorFromHEX(fg_color);
-    GColor bg_color_con = GColorFromHEX(bg_color);
+    GColor fg_color_con = GColorFromHEX(settings.fg_color);
+    GColor bg_color_con = GColorFromHEX(settings.bg_color);
     if(*toggle) {
         window_set_background_color(window, fg_color_con);
         text_layer_set_background_color(bpm_text_layer, fg_color_con);
@@ -162,7 +163,7 @@ void toggle_colors(int *toggle) {
         text_layer_set_background_color(tempo_text_layer, fg_color_con);
         text_layer_set_text_color(tempo_text_layer, bg_color_con);
         
-        meter_color = bg_color;
+        meter_color = settings.bg_color;
     }
     // Value of 0 resets the colors
     else {
@@ -172,7 +173,7 @@ void toggle_colors(int *toggle) {
         text_layer_set_background_color(tempo_text_layer, bg_color_con);
         text_layer_set_text_color(tempo_text_layer, fg_color_con);
         
-        meter_color = fg_color;
+        meter_color = settings.fg_color;
     }
     // Update the color of the metronome arm
     layer_mark_dirty(s_path_layer);
@@ -186,7 +187,7 @@ void toggle_meter_arm() {
     // Centers the text on the round watches, looks weird if off center
     int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
     
-    if(meter_arm) {
+    if(settings.meter_arm) {
         layer_set_hidden(s_path_layer, false);
         
         // Move to make room for the meter arm

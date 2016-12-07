@@ -83,9 +83,6 @@ void forward_animate_update(Animation *animation, const AnimationProgress progre
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = angle_bounds*2*progress_percent/100 - (s_path_angle+angle_bounds);
     
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Animation progress: %d", progress_percent);
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Amount moving: %d, Amount left: %d", delta, 40 + -s_path_angle);
-    
     path_angle_add(delta);
     layer_mark_dirty(s_path_layer);
 }
@@ -94,9 +91,6 @@ void backward_animate_update(Animation *animation, const AnimationProgress progr
     // Animate some completion variable
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = -angle_bounds*2*progress_percent/100 - (s_path_angle-angle_bounds);
-    
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Animation progress: %d", progress_percent);
-    //APP_LOG(APP_LOG_LEVEL_INFO, "Amount moving: %d, Amount left: %d", delta, 40 + -s_path_angle);
     
     path_angle_add(delta);
     layer_mark_dirty(s_path_layer);
