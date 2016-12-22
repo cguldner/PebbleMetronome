@@ -1,7 +1,10 @@
 # PebbleMetronome
 A metronome that runs on the pebble ecosystem
 
-This fantastic metronome allows for simple haptic feedback while you play, removing the need to hear anything. It can now model an older metronome by showing a moving metronome arm (shown by holding select then pressing select)! It can flash if you so choose, and it displays the current tempo marking that you are under (subject to change and heavy debate). You can also jump between the tempo markings by holding the select button then hitting up or down. 
+This fantastic metronome allows for simple haptic feedback while you play, removing the need to hear anything.
+It can now model an older metronome by showing a moving metronome arm (shown by holding select then pressing select)!
+It can flash if you so choose, and it displays the current tempo marking that you are under (subject to change and heavy debate).
+You can also jump between the tempo markings by holding the select button then hitting up or down. 
 
 ----------
 
