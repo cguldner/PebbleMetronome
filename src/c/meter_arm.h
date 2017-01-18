@@ -1,5 +1,7 @@
-#include <pebble.h>
+#ifndef ARM_H
+#define ARM_H
 
+#include <pebble.h>
 
 /**
   * Creating the meter arm
@@ -25,3 +27,7 @@ void reset_animation(void);
 void forward_animate_update(Animation *animation, const AnimationProgress progress);
 void backward_animate_update(Animation *animation, const AnimationProgress progress);
 void animate_meter_arm(int *toggle, int duration);
+
+void toggle_meter_arm();
+
+#endif

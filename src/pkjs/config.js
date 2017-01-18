@@ -1,7 +1,40 @@
 /**
   * The format of the configuration page for the app, for use with Clay
   */
-module.exports = [
+
+/**
+ * Shows the vibrate length slider if the Vibrate toggle is checked
+ */
+function customClay(minified) {
+    var clayConfig = this;
+
+    // Show/hide the vibrate length based on the Vibrate toggle switch
+    function toggleVibrateLength() {
+        if (this.get())
+            clayConfig.getItemByMessageKey('VibeLength').show();
+        else
+            clayConfig.getItemByMessageKey('VibeLength').hide();
+    }
+    // Show/hide the Vibrate switch based on the meter arm switch
+    function toggleVibrateSwitch() {
+        if (this.get())
+            clayConfig.getItemByMessageKey('Vibrate').show();
+        else
+            clayConfig.getItemByMessageKey('Vibrate').hide();
+    }
+
+    clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {
+        var vibrateToggle = clayConfig.getItemByMessageKey('Vibrate');
+        toggleVibrateLength.call(vibrateToggle);
+        vibrateToggle.on('change', toggleVibrateLength);
+        
+        var armToggleToggle = clayConfig.getItemByMessageKey('MeterArm');
+        toggleVibrateSwitch.call(armToggleToggle);
+        armToggleToggle.on('change', toggleVibrateSwitch);
+    });
+}
+
+var clayConfig = [
     {
         "type": "heading",
         "defaultValue": "Metronome Configuration"
@@ -43,7 +76,7 @@ module.exports = [
             {
                 "type": "toggle",
                 "messageKey": "Flashing",
-                "label": "Enable flashing",
+                "label": "Enable flashing of colors",
                 "defaultValue": false
             },
             {
@@ -53,12 +86,18 @@ module.exports = [
                 "defaultValue": true
             },
             {
+                "type": "toggle",
+                "messageKey": "Vibrate",
+                "label": "Enable vibrating",
+                "defaultValue": true
+            },
+            {
                 "type": "slider",
                 "messageKey": "VibeLength",
                 "defaultValue": 50,
                 "label": "Vibration Length",
                 "description": "In Milliseconds",
-                "min": 20,
+                "min": 0,
                 "max": 150,
                 "step": 1
             }
@@ -69,3 +108,5 @@ module.exports = [
         "defaultValue": "Save Settings"
     }
 ];
+
+module.exports = {clayConfig: clayConfig, customClay: customClay};

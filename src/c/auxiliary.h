@@ -1,13 +1,13 @@
-#include <pebble.h>
+#ifndef AUX_H
+#define AUX_H
 
-void update_bpm(int amount);
+#include <pebble.h>
 
 uint32_t convert_bpm(int beats);
 
 char * int_to_str(int num);
 
 char * get_tempo_marking(int bpm);
-int change_tempo_marking(int dir);
+int change_tempo_marking(int bpm, int dir);
 
-void toggle_colors(int *toggle);
-void toggle_meter_arm();
+#endif

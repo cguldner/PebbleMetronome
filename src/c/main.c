@@ -8,6 +8,18 @@ static const int SETTINGS_KEY = 7;
 static AppTimer *metro_timer = NULL;
 static int toggle_num = 0;
 
+/**
+ * Updates the bpm by the amount specified
+ */
+void update_bpm(int amount) {
+    int new_bpm = settings.bpm + amount;
+    if(new_bpm < 1 || new_bpm > 300)
+        return;
+    settings.bpm = new_bpm;
+    text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
+}
+
 void metro_loop_handler(void *data) {
     toggle_num = !toggle_num;
     
@@ -15,11 +27,13 @@ void metro_loop_handler(void *data) {
         toggle_colors(&toggle_num);
     }
     
-    VibePattern pat = {
-        .durations = settings.vibe_pat,
-        .num_segments = ARRAY_LENGTH(settings.vibe_pat),
-    };
-    vibes_enqueue_custom_pattern(pat);
+    if(settings.vibrate) {
+        VibePattern pat = {
+            .durations = settings.vibe_pat,
+            .num_segments = ARRAY_LENGTH(settings.vibe_pat),
+        };
+        vibes_enqueue_custom_pattern(pat);
+    }
     animate_meter_arm(&toggle_num, convert_bpm(settings.bpm));
     
     metro_timer = app_timer_register(convert_bpm(settings.bpm), metro_loop_handler, &data);
@@ -51,7 +65,7 @@ void up_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(1);
+    settings.bpm = change_tempo_marking(settings.bpm, 1);
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
 }
@@ -122,7 +136,7 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(-1);
+    settings.bpm = change_tempo_marking(settings.bpm, -1);
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
 }
@@ -184,8 +198,11 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
     Tuple *meter_arm_t = dict_find(iter, MESSAGE_KEY_MeterArm);
     if(meter_arm_t) settings.meter_arm = meter_arm_t->value->int32 == 1;
 
-    Tuple *vibes_t = dict_find(iter, MESSAGE_KEY_VibeLength); 
-    if(vibes_t) settings.vibe_pat[0] = vibes_t->value->int32;
+    Tuple *vibe_pat_t = dict_find(iter, MESSAGE_KEY_VibeLength);
+    if(vibe_pat_t) settings.vibe_pat[0] = vibe_pat_t->value->int32;
+    
+    Tuple *vibe_t = dict_find(iter, MESSAGE_KEY_Vibrate); 
+    if(vibe_t) settings.vibrate = vibe_t->value->int32;
     
     toggle_num = 0;
     toggle_colors(&toggle_num);
@@ -195,41 +212,18 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
 
 void prv_save_settings() {
     // Store the bpm and preferences
-    /*persist_write_int(BPM_KEY, bpm);
-    persist_write_int(FG_KEY, fg_color);
-    persist_write_int(BG_KEY, bg_color);
-    persist_write_int(VIBE_KEY, vibe_pat[0]);
-    persist_write_bool(FLASH_KEY, flashing);
-    persist_write_bool(METERARM_KEY, meter_arm);*/
-    
-    
     persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
 
 void prv_load_settings() {
-    // Reads the preferences from storage; app config doesn't get called on load
-    // Otherwise set defaults
-    /*if(persist_exists(BPM_KEY)) bpm = (int)persist_read_int(BPM_KEY);
-    else bpm = 120;
-    if(persist_exists(FG_KEY)) fg_color = (int)persist_read_int(FG_KEY);
-    else fg_color =  PBL_IF_BW_ELSE(0x000000, 0x00FF55);
-    if(persist_exists(BG_KEY)) bg_color = (int)persist_read_int(BG_KEY);
-    else bg_color =  PBL_IF_BW_ELSE(0xffffff, 0x000055);
-    if(persist_exists(VIBE_KEY)) vibe_pat[0] = (int)persist_read_int(VIBE_KEY);
-    else vibe_pat[0] = 50;
-    if(persist_exists(FLASH_KEY)) flashing = (bool)persist_read_bool(FLASH_KEY);
-    else flashing = false;
-    if(persist_exists(METERARM_KEY)) meter_arm = (bool)persist_read_bool(METERARM_KEY);
-    else meter_arm = true;*/
-    
-    
     // Load the default settings
     settings.bpm = 120;
     settings.fg_color =  PBL_IF_BW_ELSE(0x000000, 0x00FF55);
     settings.bg_color =  PBL_IF_BW_ELSE(0xffffff, 0x000055);
-    settings.vibe_pat[0] = 50;
     settings.flashing = false;
     settings.meter_arm = true;
+    settings.vibrate = true;
+    settings.vibe_pat[0] = 50;
     // Read settings from persistent storage, if they exist
     persist_read_data(SETTINGS_KEY, &settings, sizeof(settings));
 }
@@ -272,4 +266,36 @@ int main(void) {
     
     app_event_loop();
     deinit();
+}
+
+
+
+/**
+ * Toggles the colors between the foreground and background colors
+ * @param toggle - a pointer to a boolean, 0 to reset
+ */
+void toggle_colors(int *toggle) {
+    GColor fg_color_con = GColorFromHEX(settings.fg_color);
+    GColor bg_color_con = GColorFromHEX(settings.bg_color);
+    if(*toggle) {
+        window_set_background_color(window, fg_color_con);
+        text_layer_set_background_color(bpm_text_layer, fg_color_con);
+        text_layer_set_text_color(bpm_text_layer, bg_color_con);
+        text_layer_set_background_color(tempo_text_layer, fg_color_con);
+        text_layer_set_text_color(tempo_text_layer, bg_color_con);
+        
+        meter_color = settings.bg_color;
+    }
+    // Value of 0 resets the colors
+    else {
+        window_set_background_color(window, bg_color_con);
+        text_layer_set_background_color(bpm_text_layer, bg_color_con);
+        text_layer_set_text_color(bpm_text_layer, fg_color_con);
+        text_layer_set_background_color(tempo_text_layer, bg_color_con);
+        text_layer_set_text_color(tempo_text_layer, fg_color_con);
+        
+        meter_color = settings.fg_color;
+    }
+    // Update the color of the metronome arm
+    layer_mark_dirty(s_path_layer);
 }

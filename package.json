@@ -16,15 +16,23 @@
             "VibeLength",
             "BackgroundColor",
             "ForegroundColor",
-            "MeterArm"
+            "MeterArm",
+            "Vibrate"
         ],
         "projectType": "native",
         "resources": {
             "media": [
                 {
-                    "file": "images/meter_arm.png",
-                    "name": "METER_ARM",
-                    "targetPlatforms": null,
+                    "file": "images/metronome_icon.png",
+                    "menuIcon": true,
+                    "name": "METRO_ICON",
+                    "targetPlatforms": [
+                        "aplite",
+                        "basalt",
+                        "chalk",
+                        "diorite",
+                        "emery"
+                    ],
                     "type": "bitmap"
                 },
                 {
@@ -78,5 +86,5 @@
             "watchface": false
         }
     },
-    "version": "1.5.0"
+    "version": "1.7.0"
 }

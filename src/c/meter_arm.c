@@ -8,6 +8,7 @@
 #define METER_BOX_H 10
 
 static int angle_bounds;
+
 /**
   * Creating the meter arm
   */
@@ -56,20 +57,18 @@ int get_angle_bounds(void) {
     // For square watches
     #ifdef PBL_RECT
         float temp = (wb.size.w - ab) / (2 * (METER_ARM_H + sm_sqrt(sm_powint(METER_BOX_W + METER_ARM_W, 2) + sm_powint(METER_BOX_H, 2))));
-        APP_LOG(APP_LOG_LEVEL_INFO, "Temp: %d", (int)(temp*1000));
-        angle = sm_acosd(temp);
     #else
     // For round watches
         float temp = (.5*wb.size.w - ab) / (METER_ARM_H + sm_sqrt(sm_powint(METER_BOX_W + METER_ARM_W, 2) + sm_powint(METER_BOX_H, 2)));
-        APP_LOG(APP_LOG_LEVEL_INFO, "Temp: %d", (int)(temp*1000));
-        angle = sm_acosd(temp);
     #endif
+    
+    angle = sm_acosd(temp);
     
     return 90 - angle;
 }
 
 /**
-  * Animating the meter arm
+  * Animate the meter arm
   */
 void reset_animation(void) {
     if(forward_animate) animation_destroy(forward_animate);
@@ -79,7 +78,6 @@ void reset_animation(void) {
 }
 
 void forward_animate_update(Animation *animation, const AnimationProgress progress) {
-    // Animate some completion variable
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = angle_bounds*2*progress_percent/100 - (s_path_angle+angle_bounds);
     
@@ -88,14 +86,12 @@ void forward_animate_update(Animation *animation, const AnimationProgress progre
 }
 
 void backward_animate_update(Animation *animation, const AnimationProgress progress) {
-    // Animate some completion variable
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = -angle_bounds*2*progress_percent/100 - (s_path_angle-angle_bounds);
     
     path_angle_add(delta);
     layer_mark_dirty(s_path_layer);
 }
-
 
 void animate_meter_arm(int *toggle, int duration) {
     if(*toggle) {
@@ -119,5 +115,35 @@ void animate_meter_arm(int *toggle, int duration) {
         };
         animation_set_implementation(backward_animate, &backward_impl);
         animation_schedule(backward_animate);
+    }
+}
+
+/**
+ * Either shows or hides the meter arm, based on the message key "meter_arm"
+ */
+void toggle_meter_arm() {
+    GRect bounds = layer_get_bounds(window_get_root_layer(window));
+    // Centers the text on the round watches, looks weird if off center
+    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
+    
+    if(settings.meter_arm) {
+        layer_set_hidden(s_path_layer, false);
+        
+        // Move to make room for the meter arm
+        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
+        
+        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+    }
+    else {
+        layer_set_hidden(s_path_layer, true);
+        
+        // Center the frames
+        layer_set_frame((Layer *)bpm_text_layer, GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+
+        layer_set_frame((Layer *)tempo_text_layer, GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     }
 }

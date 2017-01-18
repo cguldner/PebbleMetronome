@@ -1,5 +1,7 @@
-#include <pebble.h>
+#ifndef MAIN_H
+#define MAIN_H
 
+#include <pebble.h>
 
 Window *window;
 
@@ -16,8 +18,8 @@ ActionBarLayer *prim_action_bar, *aux_action_bar;
 
 // Define our settings struct
 typedef struct ClaySettings {
-    int fg_color, bg_color, bpm;
-    bool flashing, meter_arm;
+    int bpm, fg_color, bg_color;
+    bool flashing, meter_arm, vibrate;
     uint32_t vibe_pat[1];
 } ClaySettings;
 ClaySettings settings;
@@ -50,3 +52,7 @@ void init(void);
 void deinit(void);
 
 int main(void);
+
+void toggle_colors(int *toggle);
+
+#endif
