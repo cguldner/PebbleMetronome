@@ -1,6 +1,4 @@
 #include "meter_arm.h"
-#include "main.h"
-#include "SmallMaths.h"
 
 #define METER_ARM_W 3
 #define METER_ARM_H 100

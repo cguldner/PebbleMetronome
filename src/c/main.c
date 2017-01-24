@@ -1,6 +1,4 @@
-#include "auxiliary.h"
 #include "main.h"
-#include "meter_arm.h"
 
 // For use with persisting data with Clay
 static const int SETTINGS_KEY = 7;

@@ -15,10 +15,11 @@ function customClay(minified) {
         else
             clayConfig.getItemByMessageKey('VibeLength').hide();
     }
-    // Show/hide the Vibrate switch based on the meter arm switch
+    // Show/hide the Vibrate switch based on the meter arm switch and the flashing swtich
     function toggleVibrateSwitch() {
-        if (this.get())
+        if (this.meterArm.get() || this.flashing.get())
             clayConfig.getItemByMessageKey('Vibrate').show();
+        // Don't allow turning off vibration if there is no visual component
         else
             clayConfig.getItemByMessageKey('Vibrate').hide();
     }
@@ -28,9 +29,10 @@ function customClay(minified) {
         toggleVibrateLength.call(vibrateToggle);
         vibrateToggle.on('change', toggleVibrateLength);
         
-        var armToggleToggle = clayConfig.getItemByMessageKey('MeterArm');
-        toggleVibrateSwitch.call(armToggleToggle);
-        armToggleToggle.on('change', toggleVibrateSwitch);
+        var armToggleSwtich = clayConfig.getItemByMessageKey('MeterArm'),
+            flashingToggle = clayConfig.getItemByMessageKey('Flashing');
+        toggleVibrateSwitch.call({meterArm:armToggleSwtich, flashing: flashingToggle});
+        armToggleSwtich.on('change', toggleVibrateSwitch);
     });
 }
 

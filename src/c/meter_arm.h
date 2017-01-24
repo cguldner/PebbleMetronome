@@ -1,7 +1,8 @@
 #ifndef ARM_H
 #define ARM_H
 
-#include <pebble.h>
+#include "main.h"
+#include "SmallMaths.h"
 
 /**
   * Creating the meter arm

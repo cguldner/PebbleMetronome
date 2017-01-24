@@ -1,7 +1,3 @@
-/**
-  * Includes the various functions that interact with the application logic of the metronome
-  */
-
 #include "auxiliary.h"
 
 /**

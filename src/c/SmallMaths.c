@@ -28,67 +28,6 @@ float sm_sqrt(const float x)
 }
 
 // --------------------------------------------------------------------------------------
-float sm_exp(float x) {
-  int LIMIT = 100;
-  int INVERSE_LIMIT = 100000; // Inverse fractional limit 100000 = 0.00001 == 0.001%
-  double x1 = 1;// running x, x^2, x^3 etc
-  double y = 1; // result
-  double yl = 1; // last result
-  double yd = 1; // delta result
-  double d = 1; // denominator
-  for (int i=1; i<=LIMIT; i++) {
-    yl = y;
-    x1 *= x;
-    d *= i;
-    y += x1 / d;
-    if (y == yl) {
-//      printf("sm_exp iterations: %i", i);
-      break;
-    }
-    yd = y / (y - yl);
-    if (yd > INVERSE_LIMIT || yd < -INVERSE_LIMIT) {
-//      printf("sm_exp iterations: %i", i);
-      break;
-    }
-  }
-  return y;
-}
-
-// --------------------------------------------------------------------------------------
-float sm_agm(float x1, float x2) {
-// Arithmetic-Geometric Mean  
-  int LIMIT = 100;
-  int MIN_LIMIT = 6;
-  int INVERSE_LIMIT = 100000; // Inverse fractional limit 100000 = 0.00001 == 0.001%
-  float a1 = 1;
-  float g1 = 1000;
-  float a2 = x1;
-  float g2 = x2;
-  
-  for (int n=1; n<=LIMIT; n++) {
-    a1 = a2;
-    g1 = g2;
-    a2 = (a1 + g1)/2.0;
-    g2 = sm_sqrt(a1 * g1);
-    float yd = 1.0f;
-   
-    if (n >= MIN_LIMIT) {
-      if (a2 == g2) {
-//        printf("sm_agm iterations: %i", n);
-        break;
-      }
-      yd = g2 / (g2 - g1);
-      if (yd > INVERSE_LIMIT || yd < -INVERSE_LIMIT) {
-//        printf("sm_agm iterations: %i", n);
-        break;
-      }
-    }
-  }
-  
-  return a2;
-}
-
-// --------------------------------------------------------------------------------------
 float sm_powint(float x, int y) {
   float powint = 1.0f;
   if (y > 0) {
@@ -104,61 +43,11 @@ float sm_powint(float x, int y) {
 }
 
 // --------------------------------------------------------------------------------------
-float sm_pow(float x, float y) {
-  // relies on exp and ln, so you're only going to get 6 sig figs out of this.
-  //printf("sm_pow: sm_ln(x)=%i/1000", (int)(1000*sm_ln(x)));
-  //printf("sm_pow: y * sm_ln(x)=%i/1000", (int)(1000*(y * sm_ln(x))));
-  if (x <= 0.0) {
-    return 0.0;
-  }
-  if (y == 0.0) {
-    return 1.0;
-  }
-  
-  if (y == (int)y) {
-    return sm_powint(x, (int)y);
-  }
-  
-  float res = sm_exp(y * sm_ln(x));
-  return res;
+float sm_acosd(float x) {
+  return 90.0 - sm_asind(x);
 }
 
-// --------------------------------------------------------------------------------------
-float sm_ln(float x) {
-  const int p = 18; // bits of precision
-  int m = 9;
-  int twoPowerM = sm_powint(2, m);  
-  float s = x * twoPowerM;
-  
-  while (s < sm_powint(2, p/2)) {
-    m+=1;
-    twoPowerM = sm_powint(2, m);
-    s = x * twoPowerM;
-  }
-  
-  float part1 = 4.0f / s;
-  float part2 = sm_agm(1.0f, part1) * 2;
-  float part3 = PI / part2;
-  float part4 = LN2 * m;
-  float y = part3 - part4;
-  return y;
-}
-
-// --------------------------------------------------------------------------------------
-float sm_sind(float angleDegrees) {
-  return sm_sin(angleDegrees * DEG2RAD);
-}
-
-// --------------------------------------------------------------------------------------
-float sm_cosd(float angleDegrees) {
-  return sm_cos(angleDegrees * DEG2RAD);
-}
-
-// --------------------------------------------------------------------------------------
-float sm_tand(float angleDegrees) {
-  float radians = angleDegrees * DEG2RAD;
-  return sm_sin(radians) / sm_cos(radians);
-}
+/* Other helper functions */
 
 // --------------------------------------------------------------------------------------
 float sm_asind(float x) {
@@ -166,81 +55,9 @@ float sm_asind(float x) {
 }
 
 // --------------------------------------------------------------------------------------
-float sm_acosd(float x) {
-  return 90.0 - sm_asind(x);
-}
-
-// --------------------------------------------------------------------------------------
 float sm_atand(float x) {
   return sm_atan(x) * RAD2DEG;
 }
-
-// --------------------------------------------------------------------------------------
-float sm_sin(float x) {
-  int LIMIT = 100;
-  int MIN_LIMIT = 6;
-  int INVERSE_LIMIT = 100000; // Inverse fractional limit 100000 = 0.00001 == 0.001%
-  bool negative = false;
-  float xr = x;
-  if (x < 0) {
-    negative = true;
-    xr = -xr;
-  }
-  // Reduce x to between 0 and pi
-  while (xr > TWOPI) {
-    xr -= TWOPI;
-  }
-  if (xr > PI) {
-    xr -= PI;
-    negative = !negative;
-  }
-  
-  float x1 = xr;// running x, x^3, x^5 etc
-  float y = xr; // result
-  float yl = 1; // last result
-  float yd = 1; // delta result
-  float d = 1; // denominator
-  bool negIter = false;
-  for (int i=1; i<=LIMIT; i++) {
-    negIter = !negIter;
-    yl = y;
-    x1 *= xr*xr;
-    d *= i*2;
-    d *= i*2+1;
-    if (negIter) {
-      y -= x1 / d;
-    } else {
-      y += x1 / d;     
-    }
-    if (i >= MIN_LIMIT) {
-      if (y == yl) {
-//        printf("sm_sin iterations: %i", i);
-        break;
-      }
-      yd = y / (y - yl);
-      if (yd > INVERSE_LIMIT || yd < -INVERSE_LIMIT) {
-//        printf("sm_sin iterations: %i", i);
-        break;
-      }
-    }
-  }
-  if (negative) {
-    return -y;
-  }
-  return y;
-}
-
-// --------------------------------------------------------------------------------------
-float sm_cos(float x) {
-  return sm_sin(x + HALFPI);
-}
-
-/*
-// --------------------------------------------------------------------------------------
-float sm_asin(float x) {
-  return sm_atan(x/sm_sqrt(1.0 - x * x));
-}
-*/
 // --------------------------------------------------------------------------------------
 float sm_asin(float x) {
   int LIMIT = 100;

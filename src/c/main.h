@@ -2,6 +2,8 @@
 #define MAIN_H
 
 #include <pebble.h>
+#include "auxiliary.h"
+#include "meter_arm.h"
 
 Window *window;
 
