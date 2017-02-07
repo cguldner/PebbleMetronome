@@ -1,7 +1,7 @@
 #include "meter_arm.h"
 
 #define METER_ARM_W 3
-#define METER_ARM_H 100
+#define METER_ARM_H 80
 #define METER_BOX_W 4
 #define METER_BOX_H 10
 
@@ -91,8 +91,13 @@ void backward_animate_update(Animation *animation, const AnimationProgress progr
     layer_mark_dirty(s_path_layer);
 }
 
-void animate_meter_arm(int *toggle, int duration) {
-    if(*toggle) {
+/**
+ * Sets up and executes the animation in the given direction for the duration
+ * @param direction - true is forward, false is backwards
+ * @param duration - how long the animation should be
+ */
+void animate_meter_arm(bool direction, int duration) {
+    if(direction) {
         // Create a new Animation
         forward_animate = animation_create();
         animation_set_curve(forward_animate, AnimationCurveLinear);
@@ -122,26 +127,25 @@ void animate_meter_arm(int *toggle, int duration) {
 void toggle_meter_arm() {
     GRect bounds = layer_get_bounds(window_get_root_layer(window));
     // Centers the text on the round watches, looks weird if off center
-    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
-    
+    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0,
+        bpm_y_pos, tempo_y_pos;
+    bool hide_layer;
     if(settings.meter_arm) {
-        layer_set_hidden(s_path_layer, false);
-        
+        hide_layer = false;
         // Move to make room for the meter arm
-        layer_set_frame((Layer *)bpm_text_layer, GRect(0, 0, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
-        
-        layer_set_frame((Layer *)tempo_text_layer, GRect(0, 40, bounds.size.w - action_bar_w, 40));
-        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+        bpm_y_pos = 0;
+        tempo_y_pos = 40;
     }
     else {
-        layer_set_hidden(s_path_layer, true);
-        
+        hide_layer = true;
         // Center the frames
-        layer_set_frame((Layer *)bpm_text_layer, GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
-
-        layer_set_frame((Layer *)tempo_text_layer, GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
-        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+        bpm_y_pos = bounds.size.h/2 - 25;
+        tempo_y_pos = bounds.size.h/2 + 35;
     }
+    layer_set_hidden(s_path_layer, hide_layer);
+    layer_set_frame((Layer *)bpm_text_layer, GRect(0, bpm_y_pos, bounds.size.w - action_bar_w, 45));
+    text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
+
+    layer_set_frame((Layer *)tempo_text_layer, GRect(0, tempo_y_pos, bounds.size.w - action_bar_w, 40));
+    text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 }

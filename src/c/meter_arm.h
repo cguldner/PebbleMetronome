@@ -27,7 +27,7 @@ AnimationImplementation forward_impl, backward_impl;
 void reset_animation(void);
 void forward_animate_update(Animation *animation, const AnimationProgress progress);
 void backward_animate_update(Animation *animation, const AnimationProgress progress);
-void animate_meter_arm(int *toggle, int duration);
+void animate_meter_arm(bool toggle, int duration);
 
 void toggle_meter_arm();
 

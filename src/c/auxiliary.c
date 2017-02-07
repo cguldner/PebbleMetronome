@@ -1,18 +1,22 @@
 #include "auxiliary.h"
 
-/**
- * Convert bpm to time, for scheduling timers for vibrations
- */
-uint32_t convert_bpm(int beats) {
+
+void update_bpm(int amount) {
+    int new_bpm = settings.bpm + amount;
+    if(new_bpm < 1 || new_bpm > 300)
+        return;
+    settings.bpm = new_bpm;
+    text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking());
+}
+
+uint32_t convert_bpm_to_time() {
     // Minute to milliseconds
     int minute = 1000 * 60;
-    double converted = (1 / (double)beats) * minute;
+    double converted = (1 / (double)settings.bpm) * minute;
     return (uint32_t)converted;
 }
 
-/**
- * Converts an integer to a char array/string
- */
 char * int_to_str(int num) {
     static char buff[3] = {};
     int i = 0, temp_num = num, length = 0;
@@ -37,14 +41,11 @@ char * int_to_str(int num) {
     return string;
 }
 
-/**
- * Gets the tempo marking given the bpm
- */
-char * get_tempo_marking(int bpm) {
+char * get_tempo_marking(void) {
     char buff[20] = {};
     char * tempo = buff;
     
-    switch(bpm) {
+    switch(settings.bpm) {
         case 1 ... 20:
             tempo = "Larghissimo";
             break;
@@ -80,52 +81,82 @@ char * get_tempo_marking(int bpm) {
             break;
         default:
             tempo = "Not valid";
+            APP_LOG(APP_LOG_LEVEL_ERROR, "invalid bpm of %d", settings.bpm);
             break;
     }
     return tempo;
 }
 
-/**
- * Changes the tempo marking to either the next or previous based on the dir given, either 1 or -1
- */
-int change_tempo_marking(int bpm, int dir) {
-    switch(bpm) {
+int change_tempo_marking(int dir) {
+    if(dir != 1 && dir != -1) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "invalid direction of %d", dir);
+        return -1;
+    }
+    int new_bpm;
+    switch(settings.bpm) {
         case 1 ... 20:
-            bpm = dir==1 ? 21 : 1;
+            new_bpm = dir==1 ? 21 : 1;
             break;
         case 21 ... 40:
-            bpm = dir==1 ? 41 : 1;
+            new_bpm = dir==1 ? 41 : 1;
             break;
         case 41 ... 60:
-            bpm = dir==1 ? 61 : 21;
+            new_bpm = dir==1 ? 61 : 21;
             break;
         case 61 ... 66:
-            bpm = dir==1 ? 67 : 41;
+            new_bpm = dir==1 ? 67 : 41;
             break;
         case 67 ... 76:
-            bpm = dir==1 ? 77 : 61;
+            new_bpm = dir==1 ? 77 : 61;
             break;
         case 77 ... 108:
-            bpm = dir==1 ? 109 : 67;
+            new_bpm = dir==1 ? 109 : 67;
             break;
         case 109 ... 120:
-            bpm = dir==1 ? 121 : 77;
+            new_bpm = dir==1 ? 121 : 77;
             break;
         case 121 ... 140:
-            bpm = dir==1 ? 141 : 109;
+            new_bpm = dir==1 ? 141 : 109;
             break;
         case 141 ... 168:
-            bpm = dir==1 ? 169 : 121;
+            new_bpm = dir==1 ? 169 : 121;
             break;
         case 169 ... 200:
-            bpm = dir==1 ? 201 : 141;
+            new_bpm = dir==1 ? 201 : 141;
             break;
         case 201 ... 300:
-            bpm = dir==1 ? 300 : 169;
+            new_bpm = dir==1 ? 300 : 169;
             break;
         default:
-            bpm = 0;
+            new_bpm = 0;
+            APP_LOG(APP_LOG_LEVEL_ERROR, "invalid bpm of %d", settings.bpm);
             break;
     }
-    return bpm;
+    return new_bpm;
+}
+
+void toggle_colors(bool toggle) {
+    GColor fg_color_con = GColorFromHEX(settings.fg_color);
+    GColor bg_color_con = GColorFromHEX(settings.bg_color);
+    if(toggle) {
+        window_set_background_color(window, fg_color_con);
+        text_layer_set_background_color(bpm_text_layer, fg_color_con);
+        text_layer_set_text_color(bpm_text_layer, bg_color_con);
+        text_layer_set_background_color(tempo_text_layer, fg_color_con);
+        text_layer_set_text_color(tempo_text_layer, bg_color_con);
+        
+        meter_color = settings.bg_color;
+    }
+    // Value of 0 resets the colors
+    else {
+        window_set_background_color(window, bg_color_con);
+        text_layer_set_background_color(bpm_text_layer, bg_color_con);
+        text_layer_set_text_color(bpm_text_layer, fg_color_con);
+        text_layer_set_background_color(tempo_text_layer, bg_color_con);
+        text_layer_set_text_color(tempo_text_layer, fg_color_con);
+        
+        meter_color = settings.fg_color;
+    }
+    // Update the color of the metronome arm
+    layer_mark_dirty(s_path_layer);
 }

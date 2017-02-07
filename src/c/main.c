@@ -1,28 +1,19 @@
 #include "main.h"
 
+
+static const int REPEAT_INTERVAL = 75;
+static const int LONG_DELAY = 400;
 // For use with persisting data with Clay
 static const int SETTINGS_KEY = 7;
 
 static AppTimer *metro_timer = NULL;
-static int toggle_num = 0;
-
-/**
- * Updates the bpm by the amount specified
- */
-void update_bpm(int amount) {
-    int new_bpm = settings.bpm + amount;
-    if(new_bpm < 1 || new_bpm > 300)
-        return;
-    settings.bpm = new_bpm;
-    text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
-    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
-}
 
 void metro_loop_handler(void *data) {
-    toggle_num = !toggle_num;
+    // Invert the data based on whether the pointer was NULL or not
+    int color_stat = data ? 0 : 1;
     
     if(settings.flashing) {
-        toggle_colors(&toggle_num);
+        toggle_colors(color_stat);
     }
     
     if(settings.vibrate) {
@@ -32,25 +23,26 @@ void metro_loop_handler(void *data) {
         };
         vibes_enqueue_custom_pattern(pat);
     }
-    animate_meter_arm(&toggle_num, convert_bpm(settings.bpm));
+    animate_meter_arm(color_stat, convert_bpm_to_time());
     
-    metro_timer = app_timer_register(convert_bpm(settings.bpm), metro_loop_handler, &data);
+    // Schedule the next timer
+    metro_timer = app_timer_register(convert_bpm_to_time(), metro_loop_handler, color_stat ? &color_stat : NULL);
 }
 
 void click_config_provider(void *context) {
-    window_single_repeating_click_subscribe(BUTTON_ID_UP, 75, up_bpm_click_handler);
-    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 75, down_bpm_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_UP, REPEAT_INTERVAL, up_bpm_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, REPEAT_INTERVAL, down_bpm_click_handler);
     
     window_single_click_subscribe(BUTTON_ID_SELECT, select_play_click_handler);
-    window_long_click_subscribe(BUTTON_ID_SELECT, 400, select_long_click_handler, NULL);
+    window_long_click_subscribe(BUTTON_ID_SELECT, LONG_DELAY, select_long_click_handler, NULL);
 }
 
 void aux_click_config_provider(void *context) {
-    window_single_repeating_click_subscribe(BUTTON_ID_UP, 75, up_tempo_click_handler);
-    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 75, down_tempo_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_UP, REPEAT_INTERVAL, up_tempo_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, REPEAT_INTERVAL, down_tempo_click_handler);
     
     window_single_click_subscribe(BUTTON_ID_SELECT, select_meter_click_handler);
-    window_long_click_subscribe(BUTTON_ID_SELECT, 400, select_long_click_handler, NULL);
+    window_long_click_subscribe(BUTTON_ID_SELECT, LONG_DELAY, select_long_click_handler, NULL);
 }
 
 void up_bpm_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -63,15 +55,17 @@ void up_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(settings.bpm, 1);
+    settings.bpm = change_tempo_marking(1);
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
-    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking());
 }
 
 void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
     if(metro_timer == NULL) {
         action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_PAUSE_METRO), true);
-        metro_timer = app_timer_register(convert_bpm(settings.bpm), (AppTimerCallback) metro_loop_handler, (void *)(&toggle_num));
+        int reset = 0;
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Select handler");
+        metro_timer = app_timer_register(convert_bpm_to_time(), (AppTimerCallback)metro_loop_handler, NULL);
     }
     else {
         action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_START_METRO), true);
@@ -79,9 +73,7 @@ void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
         vibes_cancel();
         metro_timer = NULL;
         
-        // Reset the colors
-        toggle_num = 0;
-        toggle_colors(&toggle_num);
+        toggle_colors(false);
         reset_animation();
     }
 }
@@ -134,9 +126,9 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(settings.bpm, -1);
+    settings.bpm = change_tempo_marking(-1);
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
-    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking());
 }
 
 void window_load(Window *window) {
@@ -144,8 +136,9 @@ void window_load(Window *window) {
     GRect bounds = layer_get_bounds(window_layer);
     // Centers the text on the round watches, looks weird if off center
     int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
+    int status_bar_h = PBL_IF_RECT_ELSE(16, 24);
 
-    bpm_text_layer = text_layer_create(GRect(0, bounds.size.h/2 - 25, bounds.size.w - action_bar_w, 45));
+    bpm_text_layer = text_layer_create(GRect(0, bounds.size.h/2 + 25, bounds.size.w - action_bar_w, 45));
     // Use a system font in a TextLayer
     text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
     // Set the text to the BPM number as a string
@@ -154,7 +147,7 @@ void window_load(Window *window) {
     tempo_text_layer = text_layer_create(GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
     text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     // Set the text to the tempo marking the BPM currently falls under
-    text_layer_set_text(tempo_text_layer, get_tempo_marking(settings.bpm));
+    text_layer_set_text(tempo_text_layer, get_tempo_marking());
     
     text_layer_set_text_alignment(bpm_text_layer, GTextAlignmentCenter);
     text_layer_set_text_alignment(tempo_text_layer, GTextAlignmentCenter);
@@ -165,6 +158,12 @@ void window_load(Window *window) {
     prim_action_bar = action_bar_layer_create();
     action_bar_layer_add_to_window(prim_action_bar, window);
     action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
+    
+    // Initialize the status bar
+    /*StatusBarLayer *status_bar = status_bar_layer_create();
+    GRect frame = GRect(0, 0, bounds.size.w, STATUS_BAR_LAYER_HEIGHT);
+    layer_set_frame(status_bar_layer_get_layer(status_bar), frame);
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));*/
 
     action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_ADD_BEATS), true);
     action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_START_METRO), true);
@@ -202,8 +201,7 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
     Tuple *vibe_t = dict_find(iter, MESSAGE_KEY_Vibrate); 
     if(vibe_t) settings.vibrate = vibe_t->value->int32;
     
-    toggle_num = 0;
-    toggle_colors(&toggle_num);
+    toggle_colors(false);
     
     toggle_meter_arm();
 }
@@ -218,7 +216,7 @@ void prv_load_settings() {
     settings.bpm = 120;
     settings.fg_color =  PBL_IF_BW_ELSE(0x000000, 0x00FF55);
     settings.bg_color =  PBL_IF_BW_ELSE(0xffffff, 0x000055);
-    settings.flashing = false;
+    settings.flashing = true;
     settings.meter_arm = true;
     settings.vibrate = true;
     settings.vibe_pat[0] = 50;
@@ -259,41 +257,8 @@ int main(void) {
     init();
     
     // Set the colors to the defaults read from storage
-    toggle_num = 0;
-    toggle_colors(&toggle_num);
+    toggle_colors(false);
     
     app_event_loop();
     deinit();
-}
-
-
-
-/**
- * Toggles the colors between the foreground and background colors
- * @param toggle - a pointer to a boolean, 0 to reset
- */
-void toggle_colors(int *toggle) {
-    GColor fg_color_con = GColorFromHEX(settings.fg_color);
-    GColor bg_color_con = GColorFromHEX(settings.bg_color);
-    if(*toggle) {
-        window_set_background_color(window, fg_color_con);
-        text_layer_set_background_color(bpm_text_layer, fg_color_con);
-        text_layer_set_text_color(bpm_text_layer, bg_color_con);
-        text_layer_set_background_color(tempo_text_layer, fg_color_con);
-        text_layer_set_text_color(tempo_text_layer, bg_color_con);
-        
-        meter_color = settings.bg_color;
-    }
-    // Value of 0 resets the colors
-    else {
-        window_set_background_color(window, bg_color_con);
-        text_layer_set_background_color(bpm_text_layer, bg_color_con);
-        text_layer_set_text_color(bpm_text_layer, fg_color_con);
-        text_layer_set_background_color(tempo_text_layer, bg_color_con);
-        text_layer_set_text_color(tempo_text_layer, fg_color_con);
-        
-        meter_color = settings.fg_color;
-    }
-    // Update the color of the metronome arm
-    layer_mark_dirty(s_path_layer);
 }

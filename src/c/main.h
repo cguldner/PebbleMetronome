@@ -14,10 +14,6 @@ TextLayer *bpm_text_layer,
 
 ActionBarLayer *prim_action_bar, *aux_action_bar;
 
-// Variables set by the Clay configurator
-//int fg_color, bg_color, bpm;
-//bool flashing, meter_arm;
-
 // Define our settings struct
 typedef struct ClaySettings {
     int bpm, fg_color, bg_color;
@@ -25,8 +21,6 @@ typedef struct ClaySettings {
     uint32_t vibe_pat[1];
 } ClaySettings;
 ClaySettings settings;
-
-void update_bpm(int amount);
 
 void metro_loop_handler(void *data);
 
@@ -54,7 +48,5 @@ void init(void);
 void deinit(void);
 
 int main(void);
-
-void toggle_colors(int *toggle);
 
 #endif
