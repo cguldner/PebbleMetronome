@@ -7,6 +7,8 @@
 
 Window *window;
 
+Layer *window_layer;
+
 // The actual value of the metronome
 TextLayer *bpm_text_layer,
 // What tempo group the bpm falls under

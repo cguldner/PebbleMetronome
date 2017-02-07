@@ -4,15 +4,15 @@
 #include "main.h"
 #include "SmallMaths.h"
 
-/**
-  * Creating the meter arm
-  */
-const GPathInfo METER_ARM_POINTS;
+extern const GPathInfo METER_ARM_POINTS;
 Layer *s_path_layer;
 GPath *s_meter_path;
 int s_path_angle;
 int meter_color;
 
+/**
+  * Creates the meter arm and sets it to the max angle on the left
+  */
 void create_meter_arm(void);
 
 /**
@@ -20,13 +20,6 @@ void create_meter_arm(void);
  * e.g. when the layer is marked "dirty"
  */
 void path_layer_update_callback(Layer *layer, GContext *ctx);
-
-/**
- * Updates the angle by the given amount, circling around
- * if the angle would end up being greater than 360
- * @param angle - How much to increase the angle by
- */
-int path_angle_add(int angle);
 
 /**
  * Return the bounds that the metronome arm can travel
@@ -40,11 +33,9 @@ Animation *forward_animate, *backward_animate;
 AnimationImplementation forward_impl, backward_impl;
 
 /**
- * Animate the meter arm
+ * Turns off the animation, and puts the arm back in its original position
  */
-void reset_animation(void);
-void forward_animate_update(Animation *animation, const AnimationProgress progress);
-void backward_animate_update(Animation *animation, const AnimationProgress progress);
+void reset_meter_arm_animation(void);
 
 /**
  * Sets up and executes the animation in the given direction for the duration

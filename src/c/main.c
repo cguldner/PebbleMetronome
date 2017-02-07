@@ -71,7 +71,7 @@ void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
         metro_timer = NULL;
         
         toggle_colors(false);
-        reset_animation();
+        reset_meter_arm_animation();
     }
 }
 
@@ -129,7 +129,7 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 void window_load(Window *window) {
-    Layer *window_layer = window_get_root_layer(window);
+    window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
     int status_bar_h = PBL_IF_RECT_ELSE(16, 24);
 
@@ -239,11 +239,10 @@ void init(void) {
 
 void deinit(void) {
     app_timer_cancel(metro_timer);
-    // Destroy main Window
     prv_save_settings();
-    window_destroy(window);
     
     gpath_destroy(s_meter_path);
+    window_destroy(window);
 }
 
 int main(void) {

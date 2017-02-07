@@ -7,20 +7,16 @@
 
 static int angle_bounds;
 
-/**
-  * Creating the meter arm
-  */
 // The metronome arm drawn as a polygon
 const GPathInfo METER_ARM_POINTS = {
-    // This is the amount of points
+    // Number of points
     8,
-    // The shape to draw
+    // Position of each point
     (GPoint []) {{-METER_ARM_W - METER_BOX_W, -METER_ARM_H}, {-METER_ARM_W - METER_BOX_W, -METER_ARM_H - METER_BOX_H}, {METER_ARM_W + METER_BOX_W, -METER_ARM_H - METER_BOX_H},
                  {METER_ARM_W + METER_BOX_W, -METER_ARM_H}, {METER_ARM_W, -METER_ARM_H}, {METER_ARM_W, 0}, {-METER_ARM_W, 0}, {-METER_ARM_W, -METER_ARM_H}}
 };
 
 void create_meter_arm(void) {
-    Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
     angle_bounds = get_angle_bounds();
     
@@ -41,36 +37,50 @@ void path_layer_update_callback(Layer *layer, GContext *ctx) {
     gpath_draw_filled(ctx, s_meter_path);
 }
 
-int path_angle_add(int angle) {
+/**
+ * Updates the angle by the given amount, circling around
+ * if the angle would end up being greater than 360
+ * @param angle - How much to increase the angle by
+ */
+static int path_angle_add(int angle) {
     return s_path_angle = (s_path_angle + angle) % 360;
+}
+
+/**
+ * Put the meter arm in the original position
+ */
+static void reset_path_angle() {
+    path_angle_add(-angle_bounds - s_path_angle);
 }
 
 int get_angle_bounds(void) {
     int angle = 0;
     float ab = ACTION_BAR_WIDTH;
-    GRect wb = layer_get_bounds(window_get_root_layer(window));
+    GRect wb = layer_get_bounds(window_layer);
     
-    // For square watches
+    /* Gets the ratio of the triangle sides between the horizontal and the meter arm */
+    float hypotenuse = METER_ARM_H + sm_sqrt(sm_powint(METER_BOX_W + METER_ARM_W, 2) + sm_powint(METER_BOX_H, 2));
+    // Meter arm is centered with respect to action bar, so just half that distance
     #ifdef PBL_RECT
-        float temp = (wb.size.w - ab) / (2 * (METER_ARM_H + sm_sqrt(sm_powint(METER_BOX_W + METER_ARM_W, 2) + sm_powint(METER_BOX_H, 2))));
+        float horizontal_leg = (wb.size.w - ab) / 2;
     #else
-    // For round watches
-        float temp = (.5*wb.size.w - ab) / (METER_ARM_H + sm_sqrt(sm_powint(METER_BOX_W + METER_ARM_W, 2) + sm_powint(METER_BOX_H, 2)));
+    // Meter arm is in center of screen, so half the distance of the screen minus the action bar width
+        float horizontal_leg = .5 * wb.size.w - ab - 5;
     #endif
     
-    angle = sm_acosd(temp);
+    angle = sm_acosd(horizontal_leg / hypotenuse);
     
     return 90 - angle;
 }
 
-void reset_animation(void) {
+void reset_meter_arm_animation(void) {
     if(forward_animate) animation_destroy(forward_animate);
     if(backward_animate) animation_destroy(backward_animate);
-    path_angle_add(-angle_bounds - s_path_angle);
+    reset_path_angle();
     layer_mark_dirty(s_path_layer);
 }
 
-void forward_animate_update(Animation *animation, const AnimationProgress progress) {
+static void forward_animate_update(Animation *animation, const AnimationProgress progress) {
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = angle_bounds*2*progress_percent/100 - (s_path_angle+angle_bounds);
     
@@ -78,7 +88,7 @@ void forward_animate_update(Animation *animation, const AnimationProgress progre
     layer_mark_dirty(s_path_layer);
 }
 
-void backward_animate_update(Animation *animation, const AnimationProgress progress) {
+static void backward_animate_update(Animation *animation, const AnimationProgress progress) {
     int progress_percent = ((int)progress * 100) / ANIMATION_NORMALIZED_MAX;
     int delta = -angle_bounds*2*progress_percent/100 - (s_path_angle-angle_bounds);
     
@@ -112,7 +122,7 @@ void animate_meter_arm(bool direction, int duration) {
 }
 
 void toggle_meter_arm_visibility() {
-    GRect bounds = layer_get_bounds(window_get_root_layer(window));
+    GRect bounds = layer_get_bounds(window_layer);
     // Centers the text on the round watches, looks weird if off center
     int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0,
         bpm_y_pos, tempo_y_pos;
