@@ -40,6 +40,9 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context);
 void window_load(Window *window);
 void window_unload(Window *window);
 
+/**
+ * App message handler to receive data from Clay preferences
+ */
 void prv_inbox_received_handler(DictionaryIterator *iter, void *context);
 void prv_save_settings();
 void prv_load_settings();

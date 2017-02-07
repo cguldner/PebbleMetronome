@@ -33,7 +33,6 @@ void create_meter_arm(void) {
     gpath_move_to(s_meter_path, GPoint((bounds.size.w - (ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0))/2, bounds.size.h));
 }
 
-// This is the layer update callback which is called on render updates
 void path_layer_update_callback(Layer *layer, GContext *ctx) {
     // You can rotate the path before rendering
     gpath_rotate_to(s_meter_path, (TRIG_MAX_ANGLE / 360) * s_path_angle);
@@ -46,7 +45,6 @@ int path_angle_add(int angle) {
     return s_path_angle = (s_path_angle + angle) % 360;
 }
 
-// Return the bounds that the metronome arm can travel
 int get_angle_bounds(void) {
     int angle = 0;
     float ab = ACTION_BAR_WIDTH;
@@ -65,9 +63,6 @@ int get_angle_bounds(void) {
     return 90 - angle;
 }
 
-/**
-  * Animate the meter arm
-  */
 void reset_animation(void) {
     if(forward_animate) animation_destroy(forward_animate);
     if(backward_animate) animation_destroy(backward_animate);
@@ -91,11 +86,6 @@ void backward_animate_update(Animation *animation, const AnimationProgress progr
     layer_mark_dirty(s_path_layer);
 }
 
-/**
- * Sets up and executes the animation in the given direction for the duration
- * @param direction - true is forward, false is backwards
- * @param duration - how long the animation should be
- */
 void animate_meter_arm(bool direction, int duration) {
     if(direction) {
         // Create a new Animation
@@ -121,10 +111,7 @@ void animate_meter_arm(bool direction, int duration) {
     }
 }
 
-/**
- * Either shows or hides the meter arm, based on the message key "meter_arm"
- */
-void toggle_meter_arm() {
+void toggle_meter_arm_visibility() {
     GRect bounds = layer_get_bounds(window_get_root_layer(window));
     // Centers the text on the round watches, looks weird if off center
     int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0,
@@ -133,19 +120,20 @@ void toggle_meter_arm() {
     if(settings.meter_arm) {
         hide_layer = false;
         // Move to make room for the meter arm
-        bpm_y_pos = 0;
-        tempo_y_pos = 40;
+        bpm_y_pos = STATUS_BAR_LAYER_HEIGHT;
+        tempo_y_pos = STATUS_BAR_LAYER_HEIGHT + 40;
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
     }
     else {
         hide_layer = true;
         // Center the frames
         bpm_y_pos = bounds.size.h/2 - 25;
         tempo_y_pos = bounds.size.h/2 + 35;
+        text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+        text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
     }
     layer_set_hidden(s_path_layer, hide_layer);
     layer_set_frame((Layer *)bpm_text_layer, GRect(0, bpm_y_pos, bounds.size.w - action_bar_w, 45));
-    text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_34_MEDIUM_NUMBERS));
-
     layer_set_frame((Layer *)tempo_text_layer, GRect(0, tempo_y_pos, bounds.size.w - action_bar_w, 40));
-    text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
 }

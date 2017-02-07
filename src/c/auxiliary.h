@@ -6,7 +6,7 @@
 
 /**
  * Updates the bpm by the amount specified
- * @param amount - how much to increment the bpm by
+ * @param amount How much to increment the bpm by
  */
 void update_bpm(int amount);
 
@@ -26,14 +26,18 @@ char * int_to_str(int num);
 char * get_tempo_marking(void);
 
 /**
- * Updates the bpm to the closest tempo marking 
- * @param dir - 1 for higher, -1 for lower
+ * Wrapper function that updates the bpm to the nearest higher tempo marking
  */
-int change_tempo_marking(int dir);
+int increment_tempo_marking(void);
+
+/**
+ * Wrapper function that updates the bpm to the nearest lower tempo marking
+ */
+int decrement_tempo_marking(void);
 
 /**
  * Toggles the colors between the foreground and background colors
- * @param toggle - a pointer to a boolean, 0 to reset
+ * @param toggle A pointer to a boolean, 0 to reset
  */
 void toggle_colors(bool toggle);
 

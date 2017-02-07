@@ -87,6 +87,10 @@ char * get_tempo_marking(void) {
     return tempo;
 }
 
+/**
+ * Updates the bpm to the closest tempo marking 
+ * @param dir - 1 for higher, -1 for lower
+ */
 int change_tempo_marking(int dir) {
     if(dir != 1 && dir != -1) {
         APP_LOG(APP_LOG_LEVEL_ERROR, "invalid direction of %d", dir);
@@ -133,6 +137,14 @@ int change_tempo_marking(int dir) {
             break;
     }
     return new_bpm;
+}
+
+int increment_tempo_marking() {
+    return change_tempo_marking(1);
+} 
+
+int decrement_tempo_marking() {
+    return change_tempo_marking(-1);
 }
 
 void toggle_colors(bool toggle) {

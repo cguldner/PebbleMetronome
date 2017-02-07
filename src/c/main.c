@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 static const int REPEAT_INTERVAL = 75;
 static const int LONG_DELAY = 400;
 // For use with persisting data with Clay
@@ -55,7 +54,7 @@ void up_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(1);
+    settings.bpm = increment_tempo_marking();
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking());
 }
@@ -63,8 +62,6 @@ void up_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
 void select_play_click_handler(ClickRecognizerRef recognizer, void *context) {
     if(metro_timer == NULL) {
         action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_PAUSE_METRO), true);
-        int reset = 0;
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Select handler");
         metro_timer = app_timer_register(convert_bpm_to_time(), (AppTimerCallback)metro_loop_handler, NULL);
     }
     else {
@@ -126,7 +123,7 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
     action_bar_layer_destroy(aux_action_bar);
     aux_action_bar = NULL;
     
-    settings.bpm = change_tempo_marking(-1);
+    settings.bpm = decrement_tempo_marking();
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
     text_layer_set_text(tempo_text_layer, get_tempo_marking());
 }
@@ -134,18 +131,14 @@ void down_tempo_click_handler(ClickRecognizerRef recognizer, void *context) {
 void window_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
-    // Centers the text on the round watches, looks weird if off center
-    int action_bar_w = ACTION_BAR_WIDTH==30 ? ACTION_BAR_WIDTH : 0;
     int status_bar_h = PBL_IF_RECT_ELSE(16, 24);
 
-    bpm_text_layer = text_layer_create(GRect(0, bounds.size.h/2 + 25, bounds.size.w - action_bar_w, 45));
-    // Use a system font in a TextLayer
-    text_layer_set_font(bpm_text_layer, fonts_get_system_font(FONT_KEY_BITHAM_42_MEDIUM_NUMBERS));
+    // Just initialize the layer
+    bpm_text_layer = text_layer_create(GRect(0,0,0,0));
     // Set the text to the BPM number as a string
     text_layer_set_text(bpm_text_layer, int_to_str(settings.bpm));
 
-    tempo_text_layer = text_layer_create(GRect(0, bounds.size.h/2 + 35, bounds.size.w - action_bar_w, 45));
-    text_layer_set_font(tempo_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
+    tempo_text_layer = text_layer_create(GRect(0,0,0,0));
     // Set the text to the tempo marking the BPM currently falls under
     text_layer_set_text(tempo_text_layer, get_tempo_marking());
     
@@ -160,10 +153,10 @@ void window_load(Window *window) {
     action_bar_layer_set_click_config_provider(prim_action_bar, click_config_provider);
     
     // Initialize the status bar
-    /*StatusBarLayer *status_bar = status_bar_layer_create();
+    StatusBarLayer *status_bar = status_bar_layer_create();
     GRect frame = GRect(0, 0, bounds.size.w, STATUS_BAR_LAYER_HEIGHT);
     layer_set_frame(status_bar_layer_get_layer(status_bar), frame);
-    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));*/
+    layer_add_child(window_layer, status_bar_layer_get_layer(status_bar));
 
     action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_UP, gbitmap_create_with_resource(RESOURCE_ID_ADD_BEATS), true);
     action_bar_layer_set_icon_animated(prim_action_bar, BUTTON_ID_SELECT, gbitmap_create_with_resource(RESOURCE_ID_START_METRO), true);
@@ -173,14 +166,14 @@ void window_load(Window *window) {
     
     create_meter_arm();
     
-    toggle_meter_arm();
+    toggle_meter_arm_visibility();
 }
 
 void window_unload(Window *window) {
     text_layer_destroy(bpm_text_layer);
+    text_layer_destroy(tempo_text_layer);
 }
 
-// App message handler to receive data from Clay preferences
 void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
     // Read color preferences
     Tuple *fg_color_t = dict_find(iter, MESSAGE_KEY_ForegroundColor);
@@ -203,7 +196,7 @@ void prv_inbox_received_handler(DictionaryIterator *iter, void *context) {
     
     toggle_colors(false);
     
-    toggle_meter_arm();
+    toggle_meter_arm_visibility();
 }
 
 void prv_save_settings() {
@@ -214,9 +207,9 @@ void prv_save_settings() {
 void prv_load_settings() {
     // Load the default settings
     settings.bpm = 120;
-    settings.fg_color =  PBL_IF_BW_ELSE(0x000000, 0x00FF55);
-    settings.bg_color =  PBL_IF_BW_ELSE(0xffffff, 0x000055);
-    settings.flashing = true;
+    settings.fg_color = PBL_IF_BW_ELSE(0x000000, 0x00FF55);
+    settings.bg_color = PBL_IF_BW_ELSE(0xffffff, 0x000055);
+    settings.flashing = false;
     settings.meter_arm = true;
     settings.vibrate = true;
     settings.vibe_pat[0] = 50;
